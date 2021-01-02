@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.baby.management.admin.mapper.AdminMapper">
+
+    <resultMap id="SchoolFacultyInfo" type="com.baby.management.admin.entity.vo.FacultyAndMajorVO">
+        <result property="facultyNumber" column="faculty_number" jdbcType="BIGINT"/>
+        <result property="facultyName" column="faculty_name" jdbcType="VARCHAR"/>
+        <collection property="majorList" javaType="java.util.List"
+                    ofType="com.baby.management.admin.entity.vo.MajorAndSquadVO">
+            <result property="majorNumber" column="major_number" jdbcType="BIGINT"/>
+            <result property="majorName" column="major_name" jdbcType="VARCHAR"/>
+            <collection property="squadList" javaType="java.util.List"
+                        ofType="com.baby.management.admin.entity.vo.SquadNameAndNumberVO">
+                <result property="squadNumber" column="squad_number" jdbcType="BIGINT"/>
+                <result property="squadName" column="squad_name" jdbcType="VARCHAR"/>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="selectFacultyInfo" resultMap="SchoolFacultyInfo">
+        select faculty.faculty_name,
+               faculty.faculty_number,
+               major.major_name,
+               major.major_number,
+               squad.squad_name,
+               squad.squad_number
+        from faculty
+                 left join major on faculty.id = major.faculty_id
+                 left join squad on major.id = squad.major_id
+    </select>
+
+    <resultMap id="StudentList" type="com.baby.management.admin.entity.vo.FacultyAndMajorVO">
+        <result property="facultyNumber" column="faculty_number" jdbcType="BIGINT"/>
+        <result property="facultyName" column="faculty_name" jdbcType="VARCHAR"/>
+        <collection property="majorList" javaType="java.util.List"
+                    ofType="com.baby.management.admin.entity.vo.MajorAndSquadVO">
+            <result property="majorNumber" column="major_number" jdbcType="BIGINT"/>
+            <result property="majorName" column="major_name" jdbcType="VARCHAR"/>
+            <collection property="squadList" javaType="java.util.List"
+                        ofType="com.baby.management.admin.entity.vo.SquadAndStudentVO">
+                <result property="squadNumber" column="squad_number" jdbcType="BIGINT"/>
+                <result property="squadName" column="squad_name" jdbcType="VARCHAR"/>
+                <collection property="studentList" javaType="java.util.List"
+                            ofType="com.baby.management.admin.entity.vo.StudentNameAndNumberVO">
+                    <result property="studentNumber" column="student_number" jdbcType="BIGINT"/>
+                    <result property="studentName" column="student_name" jdbcType="VARCHAR"/>
+                </collection>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="selectAllStudent" resultMap="StudentList">
+        select faculty.faculty_name,
+               faculty.faculty_number,
+               major.major_name,
+               major.major_number,
+               squad.squad_name,
+               squad.squad_number,
+               student.student_number,
+               student.student_name
+        from faculty
+                 left join major on faculty.id = major.faculty_id
+                 left join squad on major.id = squad.major_id
+                 left join student on squad.id = student.squad_id
+    </select>
+
+    <select id="selectAdminClass" resultType="com.baby.management.admin.entity.bo.StudentInfoBO"
+            parameterType="com.baby.management.admin.entity.Admin">
+        select student.student_number,
+               student.student_name,
+               student.student_sex,
+               student.password,
+               squad.squad_name,
+               major.major_name,
+               faculty.faculty_name,
+               admin.admin_number
+        from student
+                 left join squad on student.squad_id = squad.id
+                 left join major on squad.major_id = major.id
+                 left join faculty on major.faculty_id = faculty.id
+                 left join admin on admin.type_number = squad.squad_number
+        where admin.admin_number = #{adminNumber}
+        order by student.student_number asc
+    </select>
+    <!--    系管理-->
+    <select id="selectAdminMajorClass" resultType="com.baby.management.admin.entity.bo.StudentInfoBO"
+            parameterType="com.baby.management.admin.entity.Admin">
+        select student.student_number,
+               student.student_name,
+               student.student_sex,
+               student.password,
+               squad.squad_name,
+               major.major_name,
+               faculty.faculty_name
+        from student
+                 left join squad on student.squad_id = squad.id
+                 left join major on squad.major_id = major.id
+                 left join faculty on major.faculty_id = faculty.id
+                 left join admin on admin.type_number = major.major_number
+        where admin.admin_number = #{adminNumber}
+        order by student.student_number asc
+    </select>
+    <!--院管理-->
+    <select id="selectAdminFacultyClass" resultType="com.baby.management.admin.entity.bo.StudentInfoBO"
+            parameterType="com.baby.management.admin.entity.Admin">
+        select student.student_number,
+               student.student_name,
+               student.student_sex,
+               student.password,
+               squad.squad_name,
+               major.major_name,
+               faculty.faculty_name
+        from student
+                 left join squad on student.squad_id = squad.id
+                 left join major on squad.major_id = major.id
+                 left join faculty on major.faculty_id = faculty.id
+                 left join admin on admin.type_number = faculty.faculty_number
+        where admin.admin_number = #{adminNumber}
+        order by student.student_number asc
+    </select>
+
+    <!--总管理-->
+    <select id="selectAdminAllClass" resultType="com.baby.management.admin.entity.bo.StudentInfoBO">
+        select student.student_number,
+               student.student_name,
+               student.student_sex,
+               student.password,
+               squad.squad_name,
+               major.major_name,
+               faculty.faculty_name
+        from student
+                 left join squad on student.squad_id = squad.id
+                 left join major on squad.major_id = major.id
+                 left join faculty on major.faculty_id = faculty.id
+        order by student.student_number asc
+    </select>
+
+
+    <update id="updateStudent" parameterType="com.baby.management.admin.entity.bo.StudentUpdateBO">
+        update student
+        set student.squad_id     = (select squad.id from squad where squad.squad_number = #{squadNumber}),
+            student.student_name = #{studentName},
+            student.student_sex  = #{studentSex},
+            student.password     = #{password}
+        where student.student_number = #{studentNumber}
+    </update>
+
+    <select id="selectAllManageNotice" parameterType="com.baby.management.admin.entity.Admin"
+            resultType="com.baby.management.admin.entity.bo.AllManageNoticeBO">
+        select
+        notice.notice_number,
+        notice.create_time ,
+        notice.notice_type ,
+        notice.notice_title ,
+        notice.notice_content ,
+        notice.release_tissue ,
+        student.student_name ,
+        squad.squad_name ,
+        major.major_name ,
+        faculty.faculty_name
+        from notice
+        left join student on notice.student_id = student.id
+        left join squad on student.squad_id = squad.id
+        left join major on squad.major_id = major.id
+        left join faculty on major.faculty_id = faculty.id
+        <if test="adminRank == 1">
+            left join admin on squad.squad_number = admin.type_number
+            where admin.admin_number = 1111100000000000004
+        </if>
+    </select>
+
+    <select id="verifyAdminNotice" resultType="java.lang.Integer">
+        select count(notice.id)
+        from notice
+            left join student on notice.student_id = student.id
+            left join squad on student.squad_id = squad.id
+            left join major on squad.major_id = major.id
+            left join faculty on major.faculty_id = faculty.id
+            <if test="adminRank == 1">
+                left join admin on squad.squad_number = admin.type_number
+            </if>
+        where notice.notice_number = #{noticeNumber}
+            <if test="adminRank == 1">
+                and admin.admin_number = #{adminNumber}
+            </if>
+    </select>
+
+    <update id="adminModifyNotice" parameterType="com.baby.management.admin.entity.Notice">
+        update notice
+            set notice.notice_content = #{noticeContent} ,
+                notice.release_tissue = #{releaseTissue} ,
+                notice.create_time = #{createTime}
+            where notice.notice_number = #{noticeNumber}
+    </update>
+
+    <delete id="deleteNotice" parameterType="java.lang.Long">
+        delete from notice where notice_number = #{noticeNumber}
+    </delete>
+
+    <select id="selectIdInNumberSquad" resultType="java.lang.Integer" parameterType="java.lang.Long">
+        select squad.id from squad where squad.squad_number = #{squadNumber}
+    </select>
+
+    <insert id="insertNotice" parameterType="com.baby.management.admin.entity.Notice">
+        insert into notice(notice_number, notice_title, notice_content, notice_type, release_tissue, student_id)
+        values (#{noticeNumber},#{noticeTitle},#{noticeContent},#{noticeType},#{releaseTissue},#{studentId})
+    </insert>
+</mapper>

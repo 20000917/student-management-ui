@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.baby.management.student.mapper.StudentMapper">
+
+    <select id="selectMeInfo" resultType="com.baby.management.student.entity.vo.StudentInfoVO">
+        select student.student_number,
+               student.student_name,
+               student.student_sex,
+               student.password,
+               faculty.faculty_name,
+               major.major_name,
+               squad.squad_name
+        from student
+                 left join squad on student.squad_id = squad.id
+                 left join major on squad.major_id = major.id
+                 left join faculty on major.faculty_id = faculty.id
+        where student.student_number = #{studentNumber};
+    </select>
+
+    <select id="selectMeNotice" resultType="com.baby.management.student.entity.bo.StudentNoticeBO">
+        select
+            notice.notice_number ,
+            notice.notice_title ,
+            notice.notice_content ,
+            notice.create_time ,
+            notice.release_tissue
+        from student
+                 left join notice on student.id = notice.student_id
+        where student_number = #{studentNumber} order by notice.create_time desc
+    </select>
+</mapper>
